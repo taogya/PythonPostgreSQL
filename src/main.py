@@ -1,64 +1,88 @@
-from sqlalchemy import create_engine, Column, Integer, String, Sequence
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 
 
-# データベース設定
-DATABASE_URL = "postgresql+psycopg2://python:python@localhost:5432/python_db"
-
-# エンジンとセッションの設定
-engine = create_engine(DATABASE_URL)
-Session = sessionmaker(bind=engine)
-
-Base = declarative_base()
-
-class User(Base):
-    __tablename__ = 'users'
-    id = Column(Integer, Sequence('user_id_seq'), primary_key=True)
-    name = Column(String)
-    age = Column(Integer)
+from models.user import User
+from settings import Base, Session, engine
 
 # テーブルが存在しない場合は作成
 Base.metadata.create_all(engine)
 
-# Select関数
-def select_user(user_id):
+
+def select_user(user_id: int):
+    """ ユーザーを取得
+    """
     with Session() as session:
         user = session.query(User).filter(User.id == user_id).first()
         if user:
-            print(f"Found user: {user.id}, {user.name}, {user.age}")
+            print(f'Found user: {user.id}, {user.name}, {user.age}')
         else:
-            print("User not found")
+            print('User not found')
 
-# Create関数
+
 def create_user(name, age):
+    """ ユーザーを作成
+    """
     with Session() as session:
         user = User(name=name, age=age)
         session.add(user)
         session.commit()
-        print(f"User created with id: {user.id}")
+        print(f'User created with id: {user.id}')
 
-# Update関数
+
 def update_user(user_id, name=None, age=None):
+    """ ユーザーを更新
+    """
     with Session() as session:
         user = session.query(User).filter(User.id == user_id).first()
         if user:
-            if name:
-                user.name = name
-            if age:
-                user.age = age
+            user.name = name or user.name
+            user.age = age or user.age
             session.commit()
-            print("User updated")
+            print('User updated')
         else:
-            print("User not found")
+            print('User not found')
 
-# Remove関数
+
 def remove_user(user_id):
+    """ ユーザーを削除
+    """
     with Session() as session:
         user = session.query(User).filter(User.id == user_id).first()
         if user:
             session.delete(user)
             session.commit()
-            print("User removed")
+            print('User removed')
         else:
-            print("User not found")
+            print('User not found')
+
+
+def main():
+    # ユーザーを作成
+    create_user('Alice', 25)
+    create_user('Bob', 30)
+    create_user('Charlie', 35)
+
+    # ユーザーを取得
+    select_user(1)
+    select_user(2)
+    select_user(3)
+
+    # ユーザーを更新
+    update_user(1, 'Alice2')
+    update_user(2, age=31)
+
+    # ユーザーを取得
+    select_user(1)
+    select_user(2)
+    select_user(3)
+
+    # ユーザーを削除
+    remove_user(3)
+
+    # ユーザーを取得
+    select_user(1)
+    select_user(2)
+    select_user(3)
+
+
+if __name__ == '__main__':
+    main()
